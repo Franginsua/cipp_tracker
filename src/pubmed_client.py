@@ -1,5 +1,7 @@
 # src/pubmed_client.py
 
+# src/pubmed_client.py
+
 import requests
 import time
 from config import PUBMED_API_KEY
@@ -28,6 +30,9 @@ def buscar_pubs_por_filiacion(
     """
     Busca PMIDs en PubMed ejecutando búsquedas individuales para cada variante
     de afiliación del CIPP. Devuelve lista de PMIDs únicos (sin duplicados), ordenados.
+
+    Se han eliminado las búsquedas genéricas por palabras clave individuales con AND,
+    ya que producen falsos positivos.
     """
     url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi"
     terms = [
@@ -39,9 +44,6 @@ def buscar_pubs_por_filiacion(
         # Versiones sin comillas para Automatic Term Mapping
         'Centro de Investigaciones en Psicología y Psicopedagogía[Affiliation]',
         'Centro de Investigaciones en Psicologia y Psicopedagogia[Affiliation]',
-        # Sin preposición 'de'
-        '"Centro de Investigaciones Psicología y Psicopedagogía"[Affiliation]',
-        '"Centro de Investigaciones Psicologia y Psicopedagogia"[Affiliation]',
         # Variante con sigla entre paréntesis
         '"Centro de Investigaciones en Psicología y Psicopedagogía (CIPP)"[Affiliation]',
         '"Centro de Investigaciones en Psicologia y Psicopedagogia (CIPP)"[Affiliation]',
@@ -55,10 +57,7 @@ def buscar_pubs_por_filiacion(
         'CIPP[Affiliation] AND Pontificia Universidad Catolica Argentina[Affiliation]',
         'CIPP[Affiliation] AND Universidad Católica Argentina[Affiliation]',
         'CIPP[Affiliation] AND Universidad Catolica Argentina[Affiliation]',
-        'CIPP[Affiliation] AND Buenos Aires[Affiliation]',
-        # Búsqueda por palabras clave individuales con AND
-        'Centro[Affiliation] AND Investigaciones[Affiliation] AND Psicología[Affiliation] AND Psicopedagogía[Affiliation]',
-        'Centro[Affiliation] AND Investigaciones[Affiliation] AND Psicologia[Affiliation] AND Psicopedagogia[Affiliation]'
+        'CIPP[Affiliation] AND Buenos Aires[Affiliation]'
     ]
     all_pmids = set()
     for term in terms:
@@ -73,6 +72,5 @@ def buscar_pubs_por_filiacion(
         resp.raise_for_status()
         ids = resp.json().get("esearchresult", {}).get("idlist", [])
         all_pmids.update(ids)
-        time.sleep(0.3)  # Pequeña pausa para no saturar la API
+        time.sleep(0.3)
     return sorted(all_pmids)
-

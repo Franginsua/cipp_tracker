@@ -3,30 +3,43 @@
 from pubmed_client import buscar_pubs_por_filiacion, buscar_por_pmid
 import csv
 
+
 def obtener_datos(pmid: str):
-    """Devuelve un dict con el PMID, título y autores (como string)"""
+    """
+    Devuelve un dict con PMID, título, autores, año y revista.
+    """
     meta = buscar_por_pmid(pmid)
-    resultado = meta["result"][pmid]
- 
-    title = resultado["title"]
-    authors = resultado.get("authors", [])
-    nombres = [f"{a.get('name', '')}" for a in authors]
+    info = meta["result"][pmid]
+    title = info.get("title", "")
+    # Obtener autores como string
+    authors = info.get("authors", [])
+    nombres = [a.get("name", "") for a in authors]
+    # Año de publicación (primeros 4 caracteres de pubdate)
+    pubdate = info.get("pubdate", "")
+    year = pubdate[:4] if pubdate else ""
+    # Revista abreviada y nombre completo
+    journal = info.get("source", "")
+    full_journal = info.get("fulljournalname", "")
     return {
         "PMID": pmid,
         "Title": title,
-        "Authors": "; ".join(nombres)
+        "Authors": "; ".join(nombres),
+        "Year": year,
+        "Journal": full_journal or journal
     }
+
 
 def main():
     pmids = buscar_pubs_por_filiacion(retmax=100)
     print(f"Encontré {len(pmids)} PMIDs para las variantes de afiliación:")
-    
-    # Recolectar datos usando map()
+
+    # Recolectar datos con map()
     datos = list(map(obtener_datos, pmids))
 
-    # Guardar en CSV
+    # Guardar en CSV con columnas extra
     with open("publicaciones_cipp.csv", mode="w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=["PMID", "Title", "Authors"])
+        fieldnames = ["PMID", "Title", "Authors", "Year", "Journal"]
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(datos)
 
