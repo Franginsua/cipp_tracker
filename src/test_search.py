@@ -1,31 +1,42 @@
 # src/test_search.py
 
 from pubmed_client import buscar_pubs_por_filiacion, buscar_por_pmid
+from scimago_client import load_scimago_csv, get_quartile_by_issn
 import csv
+
+# Carga el mapeo de ISSN -> Quartile de SCImago
+QUARTILE_MAP = load_scimago_csv('scimagojr.csv')
 
 
 def obtener_datos(pmid: str):
     """
-    Devuelve un dict con PMID, título, autores, año y revista.
+    Devuelve un dict con PMID, título, autores, año, journal, ISSN y Quartile.
     """
     meta = buscar_por_pmid(pmid)
-    info = meta["result"][pmid]
-    title = info.get("title", "")
-    # Obtener autores como string
-    authors = info.get("authors", [])
-    nombres = [a.get("name", "") for a in authors]
-    # Año de publicación (primeros 4 caracteres de pubdate)
-    pubdate = info.get("pubdate", "")
-    year = pubdate[:4] if pubdate else ""
-    # Revista abreviada y nombre completo
-    journal = info.get("source", "")
-    full_journal = info.get("fulljournalname", "")
+    info = meta['result'][pmid]
+
+    title = info.get('title', '')
+    authors_list = info.get('authors', [])
+    authors = [a.get('name','') for a in authors_list]
+
+    pubdate = info.get('pubdate','')
+    year = pubdate[:4] if pubdate else ''
+
+    # Revista y ISSNs
+    journal = info.get('fulljournalname') or info.get('source','')
+    issn = info.get('issn') or info.get('essn','')
+
+    # Obtener cuartil desde el mapeo de SCImago
+    quartile = get_quartile_by_issn(issn, QUARTILE_MAP)
+
     return {
-        "PMID": pmid,
-        "Title": title,
-        "Authors": "; ".join(nombres),
-        "Year": year,
-        "Journal": full_journal or journal
+        'PMID': pmid,
+        'Title': title,
+        'Authors': "; ".join(authors),
+        'Year': year,
+        'Journal': journal,
+        'ISSN': issn,
+        'Quartile': quartile
     }
 
 
@@ -33,17 +44,15 @@ def main():
     pmids = buscar_pubs_por_filiacion(retmax=100)
     print(f"Encontré {len(pmids)} PMIDs para las variantes de afiliación:")
 
-    # Recolectar datos con map()
-    datos = list(map(obtener_datos, pmids))
+    datos = [obtener_datos(pmid) for pmid in pmids]
 
-    # Guardar en CSV con columnas extra
-    with open("publicaciones_cipp.csv", mode="w", newline="", encoding="utf-8") as f:
-        fieldnames = ["PMID", "Title", "Authors", "Year", "Journal"]
+    with open('publicaciones_cipp.csv', mode='w', newline='', encoding='utf-8') as f:
+        fieldnames = ['PMID','Title','Authors','Year','Journal','ISSN','Quartile']
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(datos)
 
-    print("\nDatos guardados en publicaciones_cipp.csv")
+    print("\nDatos guardados en publicaciones_cipp.csv con cuartiles incluidos.")
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

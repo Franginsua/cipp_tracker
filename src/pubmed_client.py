@@ -1,7 +1,5 @@
 # src/pubmed_client.py
 
-# src/pubmed_client.py
-
 import requests
 import time
 from config import PUBMED_API_KEY
