@@ -1,9 +1,6 @@
-# src/pubmed_client.py
-
 import requests
 import time
 from config import PUBMED_API_KEY
-
 
 def buscar_por_pmid(pmid: str) -> dict:
     """
@@ -21,35 +18,26 @@ def buscar_por_pmid(pmid: str) -> dict:
     resp.raise_for_status()
     return resp.json()
 
-
 def buscar_pubs_por_filiacion(
     retmax: int = 100
 ) -> list[str]:
     """
     Busca PMIDs en PubMed ejecutando búsquedas individuales para cada variante
     de afiliación del CIPP. Devuelve lista de PMIDs únicos (sin duplicados), ordenados.
-
-    Se han eliminado las búsquedas genéricas por palabras clave individuales con AND,
-    ya que producen falsos positivos.
     """
     url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi"
     terms = [
-        # Versiones exactas con comillas
         '"Centro de Investigaciones en Psicología y Psicopedagogía"[Affiliation]',
         '"Centro de Investigaciones en Psicologia y Psicopedagogia"[Affiliation]',
         '"centro de investigaciones en psicologia y psicopedagogía"[Affiliation]',
         '"centro de investigaciones en psicología y psicopedagogia"[Affiliation]',
-        # Versiones sin comillas para Automatic Term Mapping
         'Centro de Investigaciones en Psicología y Psicopedagogía[Affiliation]',
         'Centro de Investigaciones en Psicologia y Psicopedagogia[Affiliation]',
-        # Variante con sigla entre paréntesis
         '"Centro de Investigaciones en Psicología y Psicopedagogía (CIPP)"[Affiliation]',
         '"Centro de Investigaciones en Psicologia y Psicopedagogia (CIPP)"[Affiliation]',
-        # Variantes en inglés
         '"Center for Research in Psychology and Psychopedagogy"[Affiliation]',
         'Center for Research in Psychology and Psychopedagogy[Affiliation]',
         '"Center Research Psychology Psychopedagogy"[Affiliation]',
-        # Sigla + contexto
         'CIPP[Affiliation] AND Argentina[Affiliation]',
         'CIPP[Affiliation] AND Pontificia Universidad Católica Argentina[Affiliation]',
         'CIPP[Affiliation] AND Pontificia Universidad Catolica Argentina[Affiliation]',
@@ -72,3 +60,4 @@ def buscar_pubs_por_filiacion(
         all_pmids.update(ids)
         time.sleep(0.3)
     return sorted(all_pmids)
+
