@@ -50,7 +50,7 @@ def main():
 
     datos = [obtener_datos(pmid) for pmid in pmids]
 
-    with open('publicaciones_cipp.csv', mode='w', newline='', encoding='utf-8') as f:
+    with open('publicaciones_pubmed.csv', mode='w', newline='', encoding='utf-8') as f:
         fieldnames = [
             'PMID', 'DOI', 'Title', 'Authors',
             'Year', 'Journal', 'ISSN', 'Quartile'
@@ -59,7 +59,7 @@ def main():
         writer.writeheader()
         writer.writerows(datos)
 
-    print("\nDatos guardados en publicaciones_cipp.csv con DOI y cuartiles incluidos.")
+    print("\nDatos guardados en publicaciones_pubmed.csv con DOI y cuartiles incluidos.")
 
 if __name__ == '__main__':
     main()
